@@ -25,7 +25,8 @@ if uploaded_file is not None:
         
     # --- Preparar os Dados (Converter Datas e criar a Unidade) ---
     try:
-        df['Unidade'] = df['Setor'].astype(str).str.split('_').str[0]
+        # Normaliza a string removendo acentos antes de extrair a Unidade
+        df['Unidade'] = df['Setor'].astype(str).str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.split('_').str[0]
         
         df['Data de Abertura'] = pd.to_datetime(df['Abertura'], dayfirst=True)
         df['Data de Solução'] = pd.to_datetime(df['Data de Solução'], dayfirst=True, errors='coerce')
@@ -47,41 +48,40 @@ if uploaded_file is not None:
     else:
         df_filtrado = df.copy()
 
-    # --- Lógica de Análise Mensal com 'Arrastes' ---
+    # --- Lógica de Análise Mensal com 'Acumuladas' ---
     meses = pd.period_range(start="2025-01", end="2025-07", freq='M')
-    indicador_mensal = pd.DataFrame(index=meses, columns=['Planejadas', 'Executadas', 'Arraste'])
+    indicador_mensal = pd.DataFrame(index=meses, columns=['Planejadas', 'Executadas', 'Acumuladas'])
     
-    manutencoes_pendentes = pd.DataFrame()
+    manutencoes_acumuladas = pd.DataFrame()
 
     for mes in meses:
         abertas_no_mes = df_filtrado[df_filtrado['Mes_Abertura'] == mes].copy()
         
-        planejadas_no_mes = pd.concat([abertas_no_mes, manutencoes_pendentes])
+        planejadas_no_mes = pd.concat([abertas_no_mes, manutencoes_acumuladas])
         
         executadas_no_mes = planejadas_no_mes[planejadas_no_mes['Mes_Solucao'] == mes]
         
-        manutencoes_pendentes = planejadas_no_mes[
+        # --- LÓGICA CORRIGIDA: IDENTIFICANDO AS PENDÊNCIAS CORRETAMENTE ---
+        manutencoes_acumuladas = planejadas_no_mes[
             (pd.isna(planejadas_no_mes['Data de Solução'])) | 
-            (planejadas_no_mes['Mes_Solucao'] != planejadas_no_mes['Mes_Abertura'])
+            (planejadas_no_mes['Mes_Solucao'] > mes)
         ]
 
         indicador_mensal.loc[mes, 'Planejadas'] = len(planejadas_no_mes)
         indicador_mensal.loc[mes, 'Executadas'] = len(executadas_no_mes)
-        indicador_mensal.loc[mes, 'Arraste'] = len(manutencoes_pendentes)
+        indicador_mensal.loc[mes, 'Acumuladas'] = len(manutencoes_acumuladas)
 
-    # --- NOVO CÓDIGO AQUI: TRATAMENTO ROBUSTO DO ERRO ---
-    # Para evitar o ZeroDivisionError, preenche 0 com 1 antes da divisão.
-    # Onde a coluna Planejadas é 0, substituímos por 1 para evitar o erro.
-    temp_planejadas = indicador_mensal['Planejadas'].replace(0, 1)
-
-    indicador_mensal['Efetividade (%)'] = (indicador_mensal['Executadas'] / temp_planejadas * 100).astype(float)
-    
-    # Em seguida, onde a coluna Planejadas original era 0, definimos a efetividade como 100%
-    indicador_mensal.loc[indicador_mensal['Planejadas'] == 0, 'Efetividade (%)'] = 100.0
+    indicador_mensal['Efetividade (%)'] = np.where(
+        indicador_mensal['Planejadas'] > 0,
+        (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100),
+        100.0
+    )
     
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
-    indicador_mensal['Mês'] = indicador_mensal['Mês'].astype(str)
+    
+    # --- NOVO CÓDIGO: TRANSFORMA O NOME DO MÊS ---
+    indicador_mensal['Mês'] = pd.to_datetime(indicador_mensal['Mês']).dt.strftime('%B').str.title()
 
     # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
     st.subheader("Indicadores Mensais")
@@ -94,7 +94,7 @@ if uploaded_file is not None:
                 'Efetividade (%)': "{:.2f}%",
                 'Planejadas': "{:.0f}",
                 'Executadas': "{:.0f}",
-                'Arraste': "{:.0f}"
+                'Acumuladas': "{:.0f}"
             }),
             use_container_width=True
         )
