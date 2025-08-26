@@ -97,4 +97,4 @@ if uploaded_file is not None:
 
         with col2:
             st.markdown("### Percentual de Efetividade por Mês")
-            st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)").index, y="Efetividade (%)")
+            st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
