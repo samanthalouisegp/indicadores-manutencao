@@ -70,21 +70,21 @@ if uploaded_file is not None:
     indicador_mensal.index = indicador_mensal.index.astype(str)
 
    # --- Exibir os Resultados na Página Web ---
+# --- Exibir os Resultados na Página Web ---
     st.subheader("Tabela de Indicadores Mensais")
-    
-    # Criamos um contêiner para a tabela com rolagem
-    with st.container():
-        st.dataframe(
-            indicador_mensal.style.format({
-                'Efetividade (%)': "{:.2f}%",
-                'Planejadas': "{:.0f}",
-                'Executadas': "{:.0f}",
-                'Acumulada': "{:.0f}"
-            }),
-            use_container_width=True
-        )
 
-    # --- Gráficos Comparativos ---
+    st.dataframe(
+        indicador_mensal.style.format({
+            'Efetividade (%)': "{:.2f}%",
+            'Planejadas': "{:.0f}",
+            'Executadas': "{:.0f}",
+            'Arraste': "{:.0f}"
+        }),
+        height=300,  # Adiciona uma altura fixa de 300 pixels
+        use_container_width=True
+    )
+
+    # --- Análise Gráfica ---
     st.subheader("Análise Gráfica")
 
     # Criamos um contêiner para os gráficos com rolagem
@@ -97,4 +97,4 @@ if uploaded_file is not None:
 
         with col2:
             st.markdown("### Percentual de Efetividade por Mês")
-            st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
+            st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)").index, y="Efetividade (%)")
