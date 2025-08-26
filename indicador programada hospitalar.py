@@ -47,7 +47,7 @@ if uploaded_file is not None:
         # Manutenções abertas no mês atual
         abertas_no_mes = df[df['Mes_Abertura'] == mes].copy()
         
-        # Manutenções planejadas no mês = abertas no mês + arrastadas do mês anterior
+        # Planejadas no mês = abertas no mês + arrastadas do mês anterior
         planejadas_no_mes = pd.concat([abertas_no_mes, manutencoes_pendentes])
         
         # Manutenções executadas no mês
@@ -56,11 +56,10 @@ if uploaded_file is not None:
         
         # Manutenções que continuam pendentes (arraste para o próximo mês)
         # 1. Manutenções sem data de solução
-        # 2. Manutenções com data de solução posterior ao mês de abertura
-        # (usamos a Data de Abertura para garantir que estamos capturando o que está atrasado)
+        # 2. Manutenções com data de solução em um mês posterior ao de abertura
         manutencoes_pendentes = planejadas_no_mes[
             (pd.isna(planejadas_no_mes['Data de Solução'])) | 
-            (planejadas_no_mes['Data de Solução'].dt.to_period('M') > mes)
+            (planejadas_no_mes['Mes_Solucao'] > planejadas_no_mes['Mes_Abertura'])
         ]
         
         indicador_mensal.loc[mes, 'Planejadas'] = len(planejadas_no_mes)
@@ -91,6 +90,6 @@ if uploaded_file is not None:
 
     with col2:
         st.markdown("### Percentual de Efetividade por Mês")
-        st.line_chart(data=indicador_mensal, y="Efetividade (%)")
+        st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
 else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
+    st.info("Por favor, faça o upload da sua planilha para começar a análise.")ara começar a análise.")
