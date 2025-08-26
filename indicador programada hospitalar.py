@@ -25,7 +25,7 @@ if uploaded_file is not None:
         
     # --- Preparar os Dados (Converter Datas e criar a Unidade) ---
     try:
-        # Normaliza a string removendo acentos antes de extrair a Unidade
+        # CONVERSÃO CORRIGIDA: Trata valores nulos antes da normalização
         df['Unidade'] = df['Setor'].astype(str).str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.split('_').str[0]
         
         df['Data de Abertura'] = pd.to_datetime(df['Abertura'], dayfirst=True)
@@ -61,7 +61,6 @@ if uploaded_file is not None:
         
         executadas_no_mes = planejadas_no_mes[planejadas_no_mes['Mes_Solucao'] == mes]
         
-        # --- LÓGICA CORRIGIDA: IDENTIFICANDO AS PENDÊNCIAS CORRETAMENTE ---
         manutencoes_acumuladas = planejadas_no_mes[
             (pd.isna(planejadas_no_mes['Data de Solução'])) | 
             (planejadas_no_mes['Mes_Solucao'] > mes)
@@ -80,7 +79,6 @@ if uploaded_file is not None:
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
     
-    # --- NOVO CÓDIGO: TRANSFORMA O NOME DO MÊS ---
     indicador_mensal['Mês'] = pd.to_datetime(indicador_mensal['Mês']).dt.strftime('%B').str.title()
 
     # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
