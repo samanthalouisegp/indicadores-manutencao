@@ -48,23 +48,18 @@ if uploaded_file is not None:
         df_filtrado = df.copy()
 
     # --- Lógica de Análise Mensal com 'Acumuladas' ---
-    meses = pd.period_range(start="2025-01", end="2025-07", freq='M')
-    indicador_mensal = pd.DataFrame(index=meses, columns=['Planejadas', 'Executadas', 'Acumuladas'])
-
+    meses_periodo = pd.period_range(start="2025-01", end="2025-07", freq='M')
+    indicador_mensal = pd.DataFrame(index=meses_periodo, columns=['Planejadas', 'Executadas', 'Acumuladas'])
+    
     manutencoes_acumuladas = pd.DataFrame()
 
-    for mes in meses:
+    for mes in meses_periodo:
         abertas_no_mes = df_filtrado[df_filtrado['Mes_Abertura'] == mes].copy()
         
-        # Manutenções planejadas = as abertas no mês + as acumuladas do mês anterior
         planejadas_no_mes = pd.concat([abertas_no_mes, manutencoes_acumuladas])
         
-        # --- CÓDIGO CORRIGIDO: CONTAGEM DE EXECUTADAS ---
-        # A contagem de executadas é feita no dataset original, garantindo que todas as manutenções
-        # que foram solucionadas no mês (independente de quando foram abertas) sejam contadas.
         executadas_no_mes = df_filtrado[df_filtrado['Mes_Solucao'] == mes]
         
-        # As acumuladas são as que foram planejadas para o mês, mas que NÃO foram executadas.
         manutencoes_acumuladas = planejadas_no_mes[
             (pd.isna(planejadas_no_mes['Data de Solução'])) |
             (planejadas_no_mes['Mes_Solucao'] > mes)
@@ -83,31 +78,12 @@ if uploaded_file is not None:
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
     
-    # --- CÓDIGO CORRIGIDO: ORDENA OS MESES E USA NOMES EM PORTUGUÊS ---
-    indicador_mensal['Mês'] = indicador_mensal['Mês'].dt.to_timestamp().dt.strftime('%B').str.title()
-    meses_ordenados = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho']
-    indicador_mensal['Mês'] = pd.Categorical(indicador_mensal['Mês'], categories=meses_ordenados, ordered=True)
-    indicador_mensal.sort_values('Mês', inplace=True)
+    # --- NOVO CÓDIGO: MAPEA E ORDENA OS MESES ---
+    meses_nomes = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho'}
+    indicador_mensal['Meses'] = indicador_mensal['Mês'].dt.month.map(meses_nomes)
+    
+    meses_ordenados = list(meses_nomes.values())
+    indicador_mensal['Meses'] = pd.Categorical(indicador_mensal['Meses'], categories=meses_ordenados, ordered=True)
+    indicador_mensal.sort_values('Meses', inplace=True)
 
     # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
-    st.subheader("Indicadores Mensais")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Tabela de Indicadores")
-        st.dataframe(
-            indicador_mensal.style.format({
-                'Efetividade (%)': "{:.2f}%",
-                'Planejadas': "{:.0f}",
-                'Executadas': "{:.0f}",
-                'Acumuladas': "{:.0f}"
-            }),
-            use_container_width=True
-        )
-
-    with col2:
-        st.subheader("Gráfico de Efetividade")
-        st.bar_chart(data=indicador_mensal, x='Mês', y="Efetividade (%)")
-
-else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
