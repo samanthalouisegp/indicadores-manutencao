@@ -69,35 +69,7 @@ if uploaded_file is not None:
         indicador_mensal.loc[mes, 'Executadas'] = len(executadas_no_mes)
         indicador_mensal.loc[mes, 'Arraste'] = len(manutencoes_pendentes)
 
-    # --- NOVO CÓDIGO AQUI: TRATAMENTO DE ERRO DE DIVISÃO POR ZERO ---
     indicador_mensal['Efetividade (%)'] = np.where(
-        indicador_mensal['Planejadas'] == 0, # Se a quantidade planejada for 0...
-        100, # ... a efetividade é 100%
-        (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100) # Se não, faz o cálculo normal
-    )
-    
-    indicador_mensal['Efetividade (%)'] = indicador_mensal['Efetividade (%)'].fillna(0)
-    
-    indicador_mensal = indicador_mensal.reset_index()
-    indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
-    indicador_mensal['Mês'] = indicador_mensal['Mês'].astype(str)
-
-    # --- Exibir os Resultados na Página Web ---
-    st.subheader("Tabela de Indicadores Mensais")
-    st.dataframe(
-        indicador_mensal.style.format({
-            'Efetividade (%)': "{:.2f}%",
-            'Planejadas': "{:.0f}",
-            'Executadas': "{:.0f}",
-            'Arraste': "{:.0f}"
-        }),
-        height=300, # Força uma altura para a tabela, permitindo rolagem
-        use_container_width=True
-    )
-
-    # --- Exibir APENAS o gráfico de percentual ---
-    st.subheader("Análise Gráfica")
-    st.bar_chart(data=indicador_mensal, x='Mês', y="Efetividade (%)")
-
-else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
+        indicador_mensal['Planejadas'] > 0,
+        (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100),
+        10
