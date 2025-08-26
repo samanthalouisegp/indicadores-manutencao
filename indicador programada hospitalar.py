@@ -6,7 +6,7 @@ from datetime import datetime
 # --- Configurações da Página do Streamlit ---
 st.set_page_config(page_title="Dashboard de Manutenções", layout="wide")
 
-st.title("📊 Indicador de Manutenções Programadas")
+st.title("Indicador de Manutenções Programadas")
 st.write("Análise de efetividade mensal (Jan-Jul 2025).")
 
 # --- Carregar a Planilha ---
@@ -69,27 +69,32 @@ if uploaded_file is not None:
     indicador_mensal['Efetividade (%)'] = (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100).fillna(0)
     indicador_mensal.index = indicador_mensal.index.astype(str)
 
-    # --- Exibir os Resultados na Página Web ---
+   # --- Exibir os Resultados na Página Web ---
     st.subheader("Tabela de Indicadores Mensais")
-    st.dataframe(
-        indicador_mensal.style.format({
-            'Efetividade (%)': "{:.2f}%",
-            'Planejadas': "{:.0f}",
-            'Executadas': "{:.0f}",
-            'Arraste': "{:.0f}"
-        }),
-        use_container_width=True
-    )
+    
+    # Criamos um contêiner para a tabela com rolagem
+    with st.container():
+        st.dataframe(
+            indicador_mensal.style.format({
+                'Efetividade (%)': "{:.2f}%",
+                'Planejadas': "{:.0f}",
+                'Executadas': "{:.0f}",
+                'Acumulada': "{:.0f}"
+            }),
+            use_container_width=True
+        )
 
+    # --- Gráficos Comparativos ---
     st.subheader("Análise Gráfica")
-    col1, col2 = st.columns(2)
 
-    with col1:
-        st.markdown("### Manutenções Planejadas vs. Executadas")
-        st.bar_chart(data=indicador_mensal, y=["Planejadas", "Executadas"])
+    # Criamos um contêiner para os gráficos com rolagem
+    with st.container():
+        col1, col2 = st.columns(2)
 
-    with col2:
-        st.markdown("### Percentual de Efetividade por Mês")
-        st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
-else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
+        with col1:
+            st.markdown("### Manutenções Planejadas vs. Executadas")
+            st.bar_chart(data=indicador_mensal, y=["Planejadas", "Executadas"])
+
+        with col2:
+            st.markdown("### Percentual de Efetividade por Mês")
+            st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
