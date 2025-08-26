@@ -72,4 +72,32 @@ if uploaded_file is not None:
     indicador_mensal['Efetividade (%)'] = np.where(
         indicador_mensal['Planejadas'] > 0,
         (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100),
-        10
+        100.0
+    )
+    
+    indicador_mensal = indicador_mensal.reset_index()
+    indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
+    indicador_mensal['Mês'] = indicador_mensal['Mês'].astype(str)
+
+    # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
+    st.subheader("Indicadores Mensais")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Tabela de Indicadores")
+        st.dataframe(
+            indicador_mensal.style.format({
+                'Efetividade (%)': "{:.2f}%",
+                'Planejadas': "{:.0f}",
+                'Executadas': "{:.0f}",
+                'Arraste': "{:.0f}"
+            }),
+            use_container_width=True
+        )
+
+    with col2:
+        st.subheader("Gráfico de Efetividade")
+        st.bar_chart(data=indicador_mensal, x='Mês', y="Efetividade (%)")
+
+else:
+    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
