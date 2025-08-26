@@ -30,7 +30,7 @@ if uploaded_file is not None:
         df['Data de Abertura'] = pd.to_datetime(df['Abertura'], dayfirst=True)
         df['Data de Solução'] = pd.to_datetime(df['Data de Solução'], dayfirst=True, errors='coerce')
         
-        # --- NOVO CÓDIGO: COLUNA DE STATUS ---
+        # --- COLUNA DE STATUS ---
         df['Status'] = np.where(pd.isna(df['Data de Solução']), 'Não Executado', 'Executado')
 
         df['Mes_Abertura'] = df['Data de Abertura'].dt.to_period('M')
@@ -108,7 +108,7 @@ if uploaded_file is not None:
         st.subheader("Gráfico de Efetividade")
         st.bar_chart(data=indicador_mensal, x='Meses', y="Efetividade (%)")
 
-    # --- NOVO CÓDIGO: TABELA DE ORDENS DE SERVIÇO ---
+    # --- TABELA DE ORDENS DE SERVIÇO ---
     st.markdown("---")
     st.subheader("Ordens de Serviço Detalhadas")
     
@@ -133,9 +133,6 @@ if uploaded_file is not None:
     df_detalhes['Mês de Abertura'] = df_detalhes['Mês de Abertura'].dt.to_timestamp().dt.strftime('%B %Y').str.title()
     
     st.dataframe(df_detalhes, use_container_width=True, hide_index=True)
-
-else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")e (%)")
 
 else:
     st.info("Por favor, faça o upload da sua planilha para começar a análise.")
