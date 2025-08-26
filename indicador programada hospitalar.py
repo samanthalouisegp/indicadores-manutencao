@@ -87,3 +87,24 @@ if uploaded_file is not None:
     indicador_mensal.sort_values('Meses', inplace=True)
 
     # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
+    st.subheader("Indicadores Mensais")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Tabela de Indicadores")
+        st.dataframe(
+            indicador_mensal.style.format({
+                'Efetividade (%)': "{:.2f}%",
+                'Planejadas': "{:.0f}",
+                'Executadas': "{:.0f}",
+                'Acumuladas': "{:.0f}"
+            }),
+            use_container_width=True
+        )
+
+    with col2:
+        st.subheader("Gráfico de Efetividade")
+        st.bar_chart(data=indicador_mensal, x='Meses', y="Efetividade (%)")
+
+else:
+    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
