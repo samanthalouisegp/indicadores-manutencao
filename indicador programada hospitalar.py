@@ -69,11 +69,15 @@ if uploaded_file is not None:
         indicador_mensal.loc[mes, 'Executadas'] = len(executadas_no_mes)
         indicador_mensal.loc[mes, 'Arraste'] = len(manutencoes_pendentes)
 
-    indicador_mensal['Efetividade (%)'] = np.where(
-        indicador_mensal['Planejadas'] > 0,
-        (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100),
-        100.0
-    )
+    # --- NOVO CÓDIGO AQUI: TRATAMENTO ROBUSTO DO ERRO ---
+    # Para evitar o ZeroDivisionError, preenche 0 com 1 antes da divisão.
+    # Onde a coluna Planejadas é 0, substituímos por 1 para evitar o erro.
+    temp_planejadas = indicador_mensal['Planejadas'].replace(0, 1)
+
+    indicador_mensal['Efetividade (%)'] = (indicador_mensal['Executadas'] / temp_planejadas * 100).astype(float)
+    
+    # Em seguida, onde a coluna Planejadas original era 0, definimos a efetividade como 100%
+    indicador_mensal.loc[indicador_mensal['Planejadas'] == 0, 'Efetividade (%)'] = 100.0
     
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
