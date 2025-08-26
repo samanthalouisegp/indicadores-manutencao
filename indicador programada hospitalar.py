@@ -6,7 +6,7 @@ from datetime import datetime
 # --- Configurações da Página do Streamlit ---
 st.set_page_config(page_title="Dashboard de Manutenções", layout="wide")
 
-st.title("Indicador de Manutenções Programadas")
+st.title("📊 Indicador de Manutenções Programadas")
 st.write("Análise de efetividade mensal (Jan-Jul 2025).")
 
 # --- Carregar a Planilha ---
@@ -38,7 +38,7 @@ if uploaded_file is not None:
 
     # --- Lógica de Análise Mensal com 'Arrastes' ---
     meses = pd.period_range(start="2025-01", end="2025-07", freq='M')
-    indicador_mensal = pd.DataFrame(index=meses, columns=['Planejadas', 'Executadas', 'Arraste'])
+    indicador_mensal = pd.DataFrame(index=meses, columns=['Planejadas', 'Executadas', 'Acumulada'])
     
     # DataFrame para rastrear as manutenções pendentes para o próximo mês
     manutencoes_pendentes = pd.DataFrame()
@@ -64,7 +64,7 @@ if uploaded_file is not None:
         
         indicador_mensal.loc[mes, 'Planejadas'] = len(planejadas_no_mes)
         indicador_mensal.loc[mes, 'Executadas'] = len(executadas_no_mes)
-        indicador_mensal.loc[mes, 'Arraste'] = len(manutencoes_pendentes)
+        indicador_mensal.loc[mes, 'Acumulada'] = len(manutencoes_pendentes)
 
     indicador_mensal['Efetividade (%)'] = (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100).fillna(0)
     indicador_mensal.index = indicador_mensal.index.astype(str)
@@ -92,4 +92,4 @@ if uploaded_file is not None:
         st.markdown("### Percentual de Efetividade por Mês")
         st.bar_chart(data=indicador_mensal, x=indicador_mensal.index, y="Efetividade (%)")
 else:
-    st.info("Por favor, faça o upload da sua planilha para começar a análise.")ara começar a análise.")
+    st.info("Por favor, faça o upload da sua planilha para começar a análise.")
