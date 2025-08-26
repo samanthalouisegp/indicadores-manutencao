@@ -55,11 +55,15 @@ if uploaded_file is not None:
 
     for mes in meses:
         abertas_no_mes = df_filtrado[df_filtrado['Mes_Abertura'] == mes].copy()
-
+        
+        # Manutenções planejadas = as abertas no mês + as acumuladas do mês anterior
         planejadas_no_mes = pd.concat([abertas_no_mes, manutencoes_acumuladas])
-
-        executadas_no_mes = planejadas_no_mes[planejadas_no_mes['Mes_Solucao'] == mes]
-
+        
+        # --- CÓDIGO CORRIGIDO: CONTAGEM DE EXECUTADAS ---
+        # Conta todas as manutenções do DataFrame filtrado que foram solucionadas no mês atual
+        executadas_no_mes = df_filtrado[df_filtrado['Mes_Solucao'] == mes]
+        
+        # As acumuladas são as que foram planejadas para o mês, mas que NÃO foram executadas.
         manutencoes_acumuladas = planejadas_no_mes[
             (pd.isna(planejadas_no_mes['Data de Solução'])) |
             (planejadas_no_mes['Mes_Solucao'] > mes)
@@ -78,8 +82,11 @@ if uploaded_file is not None:
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
     
-    # --- CÓDIGO CORRIGIDO: CONVERTE PERIOD PARA TIMESTAMP ---
+    # --- CÓDIGO CORRIGIDO: ORDENA OS MESES ---
     indicador_mensal['Mês'] = indicador_mensal['Mês'].dt.to_timestamp().dt.strftime('%B').str.title()
+    meses_ordenados = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho']
+    indicador_mensal['Mês'] = pd.Categorical(indicador_mensal['Mês'], categories=meses_ordenados, ordered=True)
+    indicador_mensal.sort_values('Mês', inplace=True)
 
     # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
     st.subheader("Indicadores Mensais")
