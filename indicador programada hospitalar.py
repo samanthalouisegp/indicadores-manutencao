@@ -30,7 +30,6 @@ if uploaded_file is not None:
         df['Data de Abertura'] = pd.to_datetime(df['Abertura'], dayfirst=True)
         df['Data de Solução'] = pd.to_datetime(df['Data de Solução'], dayfirst=True, errors='coerce')
         
-        # --- COLUNA DE STATUS ---
         df['Status'] = np.where(pd.isna(df['Data de Solução']), 'Não Executado', 'Executado')
 
         df['Mes_Abertura'] = df['Data de Abertura'].dt.to_period('M')
@@ -40,11 +39,19 @@ if uploaded_file is not None:
         st.error(f"ERRO: A coluna {e} não foi encontrada na planilha.")
         st.info("Verifique se o nome das colunas 'Setor', 'Abertura' e 'Data de Solução' estão corretos.")
         st.stop()
+        
+    # --- FILTROS DE UNIDADE E MÊS ---
+    col_filtro1, col_filtro2 = st.columns(2)
 
-    # --- Filtro de Unidade ---
-    lista_unidades = ['Todas as Unidades'] + sorted(df['Unidade'].unique().tolist())
-    unidade_selecionada = st.selectbox("Selecione a Unidade:", options=lista_unidades)
+    with col_filtro1:
+        lista_unidades = ['Todas as Unidades'] + sorted(df['Unidade'].unique().tolist())
+        unidade_selecionada = st.selectbox("Selecione a Unidade:", options=lista_unidades)
 
+    with col_filtro2:
+        meses_nomes_ordem = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho']
+        mes_selecionado = st.selectbox("Selecione o Mês:", options=['Todos os Meses'] + meses_nomes_ordem)
+    
+    # --- Lógica de filtragem ---
     if unidade_selecionada != 'Todas as Unidades':
         df_filtrado = df[df['Unidade'] == unidade_selecionada].copy()
     else:
@@ -84,8 +91,7 @@ if uploaded_file is not None:
     meses_nomes = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho'}
     indicador_mensal['Meses'] = indicador_mensal['Mês'].dt.month.map(meses_nomes)
     
-    meses_ordenados = list(meses_nomes.values())
-    indicador_mensal['Meses'] = pd.Categorical(indicador_mensal['Meses'], categories=meses_ordenados, ordered=True)
+    indicador_mensal['Meses'] = pd.Categorical(indicador_mensal['Meses'], categories=meses_nomes_ordem, ordered=True)
     indicador_mensal.sort_values('Meses', inplace=True)
 
     # --- EXIBIÇÃO: INDICADORES RESUMO ---
@@ -108,11 +114,18 @@ if uploaded_file is not None:
         st.subheader("Gráfico de Efetividade")
         st.bar_chart(data=indicador_mensal, x='Meses', y="Efetividade (%)")
 
-    # --- TABELA DE ORDENS DE SERVIÇO ---
+    # --- TABELA DE ORDENS DE SERVIÇO DETALHADA ---
     st.markdown("---")
     st.subheader("Ordens de Serviço Detalhadas")
-    
-    df_detalhes = df_filtrado[[
+
+    # Filtra os dados detalhados pelo mês selecionado
+    if mes_selecionado != 'Todos os Meses':
+        mes_numero = list(meses_nomes.keys())[list(meses_nomes.values()).index(mes_selecionado)]
+        df_detalhes = df_filtrado[df_filtrado['Data de Abertura'].dt.month == mes_numero].copy()
+    else:
+        df_detalhes = df_filtrado.copy()
+
+    df_detalhes = df_detalhes[[
         'Mes_Abertura',
         'Status',
         'Unidade',
@@ -132,7 +145,7 @@ if uploaded_file is not None:
 
     df_detalhes['Mês de Abertura'] = df_detalhes['Mês de Abertura'].dt.to_timestamp().dt.strftime('%B %Y').str.title()
     
-    st.dataframe(df_detalhes, use_container_width=True, hide_index=True)
+    st.dataframe(df_detalhes, use_container_width=True, hide_index=True, height=400)
 
 else:
     st.info("Por favor, faça o upload da sua planilha para começar a análise.")
