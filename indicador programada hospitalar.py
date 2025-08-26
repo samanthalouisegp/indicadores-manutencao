@@ -69,26 +69,23 @@ if uploaded_file is not None:
     indicador_mensal['Efetividade (%)'] = (indicador_mensal['Executadas'] / indicador_mensal['Planejadas'] * 100).fillna(0)
     indicador_mensal.index = indicador_mensal.index.astype(str)
 
-   # --- Exibir os Resultados na Página Web ---
-# --- Exibir os Resultados na Página Web ---
-    st.subheader("Tabela de Indicadores Mensais")
+# --- Dividindo o conteúdo em abas ---
+    tab1, tab2 = st.tabs(["Tabela de Indicadores", "Análise Gráfica"])
 
-    st.dataframe(
-        indicador_mensal.style.format({
-            'Efetividade (%)': "{:.2f}%",
-            'Planejadas': "{:.0f}",
-            'Executadas': "{:.0f}",
-            'Arraste': "{:.0f}"
-        }),
-        height=300,  # Adiciona uma altura fixa de 300 pixels
-        use_container_width=True
-    )
+    with tab1:
+        st.subheader("Tabela de Indicadores Mensais")
+        st.dataframe(
+            indicador_mensal.style.format({
+                'Efetividade (%)': "{:.2f}%",
+                'Planejadas': "{:.0f}",
+                'Executadas': "{:.0f}",
+                'Arraste': "{:.0f}"
+            }),
+            use_container_width=True
+        )
 
-    # --- Análise Gráfica ---
-    st.subheader("Análise Gráfica")
-
-    # Criamos um contêiner para os gráficos com rolagem
-    with st.container():
+    with tab2:
+        st.subheader("Análise Gráfica")
         col1, col2 = st.columns(2)
 
         with col1:
