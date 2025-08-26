@@ -29,6 +29,9 @@ if uploaded_file is not None:
 
         df['Data de Abertura'] = pd.to_datetime(df['Abertura'], dayfirst=True)
         df['Data de Solução'] = pd.to_datetime(df['Data de Solução'], dayfirst=True, errors='coerce')
+        
+        # --- NOVO CÓDIGO: COLUNA DE STATUS ---
+        df['Status'] = np.where(pd.isna(df['Data de Solução']), 'Não Executado', 'Executado')
 
         df['Mes_Abertura'] = df['Data de Abertura'].dt.to_period('M')
         df['Mes_Solucao'] = df['Data de Solução'].dt.to_period('M')
@@ -78,7 +81,6 @@ if uploaded_file is not None:
     indicador_mensal = indicador_mensal.reset_index()
     indicador_mensal.rename(columns={'index': 'Mês'}, inplace=True)
     
-    # --- NOVO CÓDIGO: MAPEA E ORDENA OS MESES ---
     meses_nomes = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho'}
     indicador_mensal['Meses'] = indicador_mensal['Mês'].dt.month.map(meses_nomes)
     
@@ -86,7 +88,7 @@ if uploaded_file is not None:
     indicador_mensal['Meses'] = pd.Categorical(indicador_mensal['Meses'], categories=meses_ordenados, ordered=True)
     indicador_mensal.sort_values('Meses', inplace=True)
 
-    # --- NOVO LAYOUT: COLUNAS LADO A LADO ---
+    # --- EXIBIÇÃO: INDICADORES RESUMO ---
     st.subheader("Indicadores Mensais")
     col1, col2 = st.columns(2)
 
@@ -105,6 +107,35 @@ if uploaded_file is not None:
     with col2:
         st.subheader("Gráfico de Efetividade")
         st.bar_chart(data=indicador_mensal, x='Meses', y="Efetividade (%)")
+
+    # --- NOVO CÓDIGO: TABELA DE ORDENS DE SERVIÇO ---
+    st.markdown("---")
+    st.subheader("Ordens de Serviço Detalhadas")
+    
+    df_detalhes = df_filtrado[[
+        'Mes_Abertura',
+        'Status',
+        'Unidade',
+        'Equipamento',
+        'Tipo',
+        'Tipo de Manutenção'
+    ]].copy()
+
+    df_detalhes.rename(columns={
+        'Mes_Abertura': 'Mês de Abertura',
+        'Status': 'Status',
+        'Unidade': 'Unidade',
+        'Equipamento': 'Equipamento',
+        'Tipo': 'Tipo',
+        'Tipo de Manutenção': 'Tipo de Manutenção'
+    }, inplace=True)
+
+    df_detalhes['Mês de Abertura'] = df_detalhes['Mês de Abertura'].dt.to_timestamp().dt.strftime('%B %Y').str.title()
+    
+    st.dataframe(df_detalhes, use_container_width=True, hide_index=True)
+
+else:
+    st.info("Por favor, faça o upload da sua planilha para começar a análise.")e (%)")
 
 else:
     st.info("Por favor, faça o upload da sua planilha para começar a análise.")
